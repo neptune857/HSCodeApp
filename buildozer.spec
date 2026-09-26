@@ -1,7 +1,7 @@
 [app]
 
 # 1. 应用名称 (在安卓手机桌面上显示的名字)
-title = MyApp
+title = HS编码
 
 # 2. 应用包名 (安卓系统用来识别应用的唯一ID，必须全小写)
 package.name = myapp
