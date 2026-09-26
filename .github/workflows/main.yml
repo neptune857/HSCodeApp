@@ -25,6 +25,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libpython3-dev build-essential git-core libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+        # 自动接受 Google SDK 许可并安装必要的 build-tools
+        yes | sudo $ANDROID_HOME/tools/bin/sdkmanager "build-tools;30.0.3" "platforms;android-30"
 
     - name: Build APK with Buildozer
       run: buildozer -v android debug
@@ -32,5 +34,5 @@ jobs:
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: my-kivy-app-apk
-        path: bin/*.apk
+      name: my-kivy-app-apk
+      path: bin/*.apk
