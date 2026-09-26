@@ -3,10 +3,15 @@ name: Build APK
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -16,27 +21,63 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Cache Buildozer global
+      uses: actions/cache@v3
+      with:
+        path: ~/.buildozer
+        key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          buildozer-${{ runner.os }}-
+
+    - name: Install system-level dependencies for Kivy/Buildozer
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          git \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          ccache \
+          libncurses5-dev \
+          libtinfo-dev \
+          libx11-dev \
+          libxi-dev \
+          libxext-dev \
+          libgles2-mesa-dev \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev \
+          libsdl2-ttf-dev
+
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Install system dependencies
+    - name: Fix buildozer.spec
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libpython3-dev build-essential git-core libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
-        
-        # 1. 安装 Buildozer 要求的版本
-        yes | sudo "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "build-tools;37.0.0" "platforms;android-33"
-        
-        # 2. 设置环境变量，让 Buildozer 自动接受所有许可
-        echo 'yes' | sudo tee /dev/null > /dev/null 2>&1
+        if ! grep -q "android.accept_sdk_license = True" buildozer.spec; then
+          echo "android.accept_sdk_license = True" >> buildozer.spec
+        fi
+        sed -i 's/^p4a.source_dir/#p4a.source_dir/' buildozer.spec
+        echo "buildozer.spec fixed."
+
+    - name: Accept Android SDK licenses
+      run: |
+        export ANDROID_HOME=${ANDROID_HOME:-$HOME/Android/Sdk}
+        if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin/" ]; then
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        fi
 
     - name: Build APK with Buildozer
-      run: |
-        # 3. 在打包前，提前接受所有 Android SDK 许可
-        yes | sudo "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
-        buildozer -v android debug
+      env:
+        ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+      run: buildozer -v android debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
