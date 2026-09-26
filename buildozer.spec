@@ -1,100 +1,58 @@
-name: Build APK
+[app]
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+# 1. 应用名称 (在安卓手机桌面上显示的名字)
+title = MyApp
 
-jobs:
-  build:
-    name: Build Android APK
-    runs-on: ubuntu-latest
+# 2. 应用包名 (安卓系统用来识别应用的唯一ID，必须全小写)
+package.name = myapp
 
-    steps:
-    # 1. 检出代码
-    - name: Checkout code
-      uses: actions/checkout@v3
+# 3. 应用域名 (一般写 com 或 org 开头)
+package.domain = org.test
 
-    # 2. 设置 Python 环境
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+# 4. 源代码目录 (. 代表当前仓库的根目录)
+source.dir = .
 
-    # 3. 安装 Python 依赖
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install buildozer cython
+# 5. 需要包含的文件后缀 (你的项目里用到了 .kv 文件一定要在这里加上！)
+source.include_exts = py,png,jpg,kv,atlas,json,ttf,mp3,ogg
 
-    # 4. 安装系统级依赖库
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          git \
-          curl \
-          flex \
-          bison \
-          gperf \
-          libffi-dev \
-          libssl-dev \
-          libxml2-dev \
-          libxslt1-dev \
-          zlib1g-dev \
-          libncurses5-dev \
-          libnss3-dev \
-          libudev-dev \
-          libinput-dev \
-          libwayland-dev \
-          libxkbcommon-dev \
-          libegl1-mesa-dev \
-          libsdl2-dev \
-          libsdl2-image-dev \
-          libsdl2-mixer-dev \
-          libsdl2-ttf-dev \
-          libportmidi-dev \
-          libswscale-dev \
-          libavformat-dev \
-          libavcodec-dev \
-          libgstreamer1.0-dev \
-          libgstreamer-plugins-base1.0-dev \
-          android-sdk-command-line-tools
+# 6. 应用依赖库 (这里只写了 python3 和 kivy，如果你用了其他的如 requests, plyer，请加在这里，用逗号隔开)
+requirements = python3,kivy
 
-    # 5. 自动修正 buildozer.spec 配置错误（防止 Actions 打包失败）
-    - name: Auto-Fix buildozer.spec
-      run: |
-        # 1. 如果文件里没有开启自动接受 SDK 许可，就强制在末尾追加一行
-        if ! grep -q "android.accept_sdk_license = True" buildozer.spec; then
-          echo "android.accept_sdk_license = True" >> buildozer.spec
-          echo "[FIX] 已追加: android.accept_sdk_license = True"
-        fi
+# 7. Kivy 应用的主文件名 (比如你入口文件是 main.py，这里就写 main)
+# 如果你有 .kv 文件，并且文件名和 main.py 一样（main.kv），这里可以不写
+source.main = main
 
-        # 2. 将指向本地路径的 p4a.source_dir 注释掉
-        sed -i 's/^p4a.source_dir/#p4a.source_dir/' buildozer.spec
-        echo "[FIX] 已注释掉本地 p4a.source_dir 路径"
+# 8. 应用版本号
+version = 0.1
 
-    # 6. 自动接受 Android SDK 许可协议
-    - name: Accept Android SDK licenses
-      run: |
-        export ANDROID_HOME=${ANDROID_HOME:-$HOME/Android/Sdk}
-        if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin/" ]; then
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-        else
-          echo "WARNING: 未能找到 sdkmanager，将依赖 buildozer 内部处理"
-        fi
+# 9. 应用启动的 orientation (竖屏 portrait / 横屏 landscape)
+orientation = portrait
 
-    # 7. 使用 Buildozer 构建 APK
-    - name: Build APK with Buildozer
-      env:
-        ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
-      run: buildozer -v android debug
+# ------------------------------------------------
+# Android 专用配置 (以下代码是解决你 GitHub Actions 报错的关键)
+# ------------------------------------------------
 
-    # 8. 上传构建产物
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: my-kivy-app-apk
-        path: bin/*.apk
+# 10. 安卓最低支持版本
+android.api = 27
+
+# 11. 安卓构建目标版本
+android.ndk_api = 21
+
+# 12. 【核心修复 1】让 Buildozer 自动接受 SDK 许可协议，防止 CI 卡死
+android.accept_sdk_license = True
+
+# 13. 【核心修复 2】安卓应用图标 (把你的图标放在项目根目录，命名为 icon.png)
+# 如果没有图标，可以先注释掉这一行，或者提供一个 72x72 或 512x512 的 png 图片
+# icon.filename = icon.png
+
+# 14. 安卓启动画面 (可选)
+# presplash.filename = loading.png
+
+# 15. 安卓打包使用的 keystore (可选，不填会默认生成 debug 包)
+# android.keystore =
+# android.storepass =
+
+[buildozer]
+
+# 16. 构建过程中的详细日志级别 (0, 1, 2; 2代表输出最全，方便排查问题)
+log_level = 2
