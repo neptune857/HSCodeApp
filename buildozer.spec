@@ -41,12 +41,11 @@ android.ndk_api = 21
 # 12. 【核心修复 1】让 Buildozer 自动接受 SDK 许可协议，防止 CI 卡死
 android.accept_sdk_license = True
 
-# 13. 【核心修复 2】安卓应用图标 (把你的图标放在项目根目录，命名为 icon.png)
-# 如果没有图标，可以先注释掉这一行，或者提供一个 72x72 或 512x512 的 png 图片
-# icon.filename = icon.png
+# 13. 【核心修复 2】安卓应用图标 (你的仓库里已上传 icon.png)
+icon.filename = icon.png
 
-# 14. 安卓启动画面 (可选)
-# presplash.filename = loading.png
+# 14. 安卓启动画面 (你的仓库里已上传 presplash.png)
+presplash.filename = presplash.png
 
 # 15. 安卓打包使用的 keystore (可选，不填会默认生成 debug 包)
 # android.keystore =
