@@ -57,7 +57,6 @@ jobs:
           libssl-dev \
           zlib1g-dev
 
-    # --- 新增：清理系统垃圾文件，释放空间 ---
     - name: Free disk space by removing unnecessary tools
       run: |
         sudo rm -rf /opt/hostedtoolcache
@@ -66,7 +65,6 @@ jobs:
         sudo rm -rf /home/runner/.dotnet
         sudo rm -rf /home/runner/.cargo
 
-    # --- 新增：增加 4G 虚拟内存 (使用 dd 命令彻底解决冲突和权限报错) ---
     - name: Add Swap Memory
       run: |
         sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=4096
@@ -96,13 +94,13 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
         fi
 
-    - name: Build APK with Buildozer (With Disk Monitor)
+    - name: Build APK with Buildozer
       env:
         ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
       run: |
         echo "=================== BEFORE BUILD ==================="
         df -h
-        du -sh /home/runner/.buildozer
+        du -sh /home/runner/.buildozer 2>/dev/null || echo "Buildozer cache folder not found."
         buildozer -v android debug
         echo "=================== AFTER BUILD ===================="
         df -h
