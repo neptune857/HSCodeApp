@@ -14,15 +14,15 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4  # 已升级版本
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5  # 已升级版本
       with:
         python-version: '3.10'
 
     - name: Cache Buildozer global
-      uses: actions/cache@v3
+      uses: actions/cache@v4  # 已升级版本
       with:
         path: ~/.buildozer
         key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
@@ -57,21 +57,20 @@ jobs:
           libssl-dev \
           zlib1g-dev
 
-    # --- 新增：清理系统垃圾文件 ---
+    # --- 新增：清理系统垃圾文件，释放空间 ---
     - name: Free disk space by removing unnecessary tools
       run: |
         sudo rm -rf /opt/hostedtoolcache
         sudo rm -rf /usr/local/share/boost
         sudo rm -rf /usr/share/dotnet
 
-    # --- 新增：增加 4G 虚拟内存（已修复 Text file busy 报错） ---
+    # --- 新增：增加 4G 虚拟内存 (彻底解决冲突和权限报错) ---
     - name: Add Swap Memory
       run: |
-        sudo rm -f /swapfile
-        sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
+        sudo fallocate -l 4G /mnt/swapfile
+        sudo chmod 600 /mnt/swapfile
+        sudo mkswap /mnt/swapfile
+        sudo swapon /mnt/swapfile
 
     - name: Install Python dependencies
       run: |
