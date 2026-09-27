@@ -52,7 +52,10 @@ jobs:
           libsdl2-dev \
           libsdl2-image-dev \
           libsdl2-mixer-dev \
-          libsdl2-ttf-dev
+          libsdl2-ttf-dev \
+          libffi-dev \
+          libssl-dev \
+          zlib1g-dev
 
     - name: Install Python dependencies
       run: |
