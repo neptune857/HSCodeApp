@@ -75,10 +75,10 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        # 核心修改：在最初安装时就强制使用 pip==23.3.1，防止 buildozer 锁定高版本 pip
+        # 第一步：先把 pip 降级到 23.3.1，防止 buildozer 安装时带入新版 pip
         python -m pip install --upgrade pip==23.3.1 setuptools wheel
-        pip install cython --no-cache-dir
-        pip install buildozer==1.5.0 --no-cache-dir
+        pip install cython==0.29.37
+        pip install buildozer==1.5.0
 
     - name: Fix buildozer.spec
       run: |
@@ -99,8 +99,11 @@ jobs:
       env:
         ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
       run: |
-        # 强制清理本地构建缓存，防止之前因 pip 版本不兼容留下的“有毒”文件干扰
+        # 第二步：彻底清除之前的残留编译数据
         rm -rf .buildozer
+        # 第三步：在编译开始前，做最后一次 pip 降级保险
+        python -m pip install --upgrade "pip<24" setuptools wheel
+        # 第四步：开始编译
         buildozer -v android debug
 
     - name: Upload APK Artifact
