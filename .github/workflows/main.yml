@@ -14,15 +14,15 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4  # 已升级版本
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v5  # 已升级版本
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
     - name: Cache Buildozer global
-      uses: actions/cache@v4  # 已升级版本
+      uses: actions/cache@v4
       with:
         path: ~/.buildozer
         key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
@@ -63,14 +63,17 @@ jobs:
         sudo rm -rf /opt/hostedtoolcache
         sudo rm -rf /usr/local/share/boost
         sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /home/runner/.dotnet
+        sudo rm -rf /home/runner/.cargo
 
-    # --- 新增：增加 4G 虚拟内存 (彻底解决冲突和权限报错) ---
+    # --- 新增：增加 4G 虚拟内存 (使用 dd 命令彻底解决冲突和权限报错) ---
     - name: Add Swap Memory
       run: |
-        sudo fallocate -l 4G /mnt/swapfile
+        sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=4096
         sudo chmod 600 /mnt/swapfile
         sudo mkswap /mnt/swapfile
         sudo swapon /mnt/swapfile
+        free -h
 
     - name: Install Python dependencies
       run: |
@@ -93,10 +96,16 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
         fi
 
-    - name: Build APK with Buildozer
+    - name: Build APK with Buildozer (With Disk Monitor)
       env:
         ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
-      run: buildozer -v android debug
+      run: |
+        echo "=================== BEFORE BUILD ==================="
+        df -h
+        du -sh /home/runner/.buildozer
+        buildozer -v android debug
+        echo "=================== AFTER BUILD ===================="
+        df -h
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
