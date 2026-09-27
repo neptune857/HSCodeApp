@@ -7,9 +7,10 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
+from kivy.effects.scroll import ScrollEffect
 from kivy.metrics import dp
+
 
 class ResultItem(RecycleDataViewBehavior, BoxLayout):
     def __init__(self, **kwargs):
@@ -30,12 +31,14 @@ class ResultItem(RecycleDataViewBehavior, BoxLayout):
         self.add_widget(title)
         self.add_widget(desc)
 
+
 class RV(RecycleView):
     def __init__(self, **kwargs):
         super(RV, self).__init__(**kwargs)
         self.viewclass = ResultItem
         self.data = []
-        self.effect_cls = "ScrollEffect"
+        self.effect_cls = ScrollEffect
+
 
 class HSApp(App):
     def __init__(self, **kwargs):
@@ -61,14 +64,12 @@ class HSApp(App):
 
     def search(self, *args):
         keyword = self.text_input.text.strip()
-        self.rv.data.clear()
-        self.rv.refresh_from_data()
         
         if not keyword:
             return
 
         if not os.path.exists(self.db_path):
-            self.rv.data.append({"code": "错误", "name": f"找不到数据库文件: {self.db_path}"})
+            self.rv.data = [{"code": "错误", "name": f"找不到数据库文件: {self.db_path}"}]
             self.rv.refresh_from_data()
             return
 
@@ -81,10 +82,13 @@ class HSApp(App):
         rows = cursor.fetchall()
         conn.close()
 
+        results = []
         for row in rows:
-            self.rv.data.append({"code": row[0], "name": row[1]})
+            results.append({"code": row[0], "name": row[1]})
         
+        self.rv.data = results
         self.rv.refresh_from_data()
+
 
 if __name__ == '__main__':
     HSApp().run()
