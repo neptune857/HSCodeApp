@@ -64,10 +64,11 @@ jobs:
         sudo rm -rf /usr/local/share/boost
         sudo rm -rf /usr/share/dotnet
 
-    # --- 新增：增加 4G 虚拟内存 ---
+    # --- 新增：增加 4G 虚拟内存（已修复 Text file busy 报错） ---
     - name: Add Swap Memory
       run: |
-        sudo fallocate -l 4G /swapfile
+        sudo rm -f /swapfile
+        sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
         sudo swapon /swapfile
